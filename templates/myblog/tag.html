@@ -1,0 +1,144 @@
+{% extends "myblog/base.html" %}
+{% block title %}
+| {{tag_name}}
+{% endblock %}
+{% block css %}
+<link rel="stylesheet" type="text/css" href="/static/myblog/css/head.css">
+<link rel="stylesheet" type="text/css" href="/static/myblog/css/label.css">
+<link rel="stylesheet" type="text/css" href="/static/myblog/css/keka.css">
+
+<style type="text/css">
+	#contents{
+		width: 100%;
+		/*height: 500px;*/
+		height: 100%;
+	}
+	.excerpt .thumb{
+		/*width: 150px;*/
+		height: 80px;
+	}
+	#contents .excerpt{
+		width: 100%;
+	}
+
+</style>
+{% endblock %}
+{% block content %}
+	<div id="contents">
+		<h3 class="head"><strong>{{tag_name}}</strong></h3>
+
+
+	</div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+	var article_ids={{ article_ids | safe }}
+	var onePage=3
+	var page=1
+	$(document).ready(function(){
+		showMore()
+	})
+	$(window).on("resize scroll",function(){
+        var windowHeight = $(window).height();//当前窗口的高度             
+        var scrollTop = $(window).scrollTop();//当前滚动条从上往下滚动的距离            
+        var docHeight = $("#contents").height(); //当前文档的高度 
+        console.log(scrollTop, windowHeight, docHeight);
+        //当 滚动条距底部的距离 + 滚动条滚动的距离 >= 文档的高度 - 窗口的高度  
+        //换句话说：（滚动条滚动的距离 + 窗口的高度 = 文档的高度）  这个是基本的公式 
+        if (scrollTop + windowHeight - 70 - 41 - 15 >= docHeight) { 
+            // console.log("===加载文章===");
+            showMore()
+        }
+    });
+    function getArticle(id){
+		$.ajax({
+            type: "POST",
+            dataType: "json",
+            url: "{% url 'blog:getArticleById' %}",
+            data: {
+            	'article_id':id,
+            	'csrfmiddlewaretoken':'{{ csrf_token }}', 
+            },
+            success: function (ret) {
+            	//得到对应文章
+            	paintArticle(ret)
+            },
+            error: function () {
+                alert('错误');
+            }
+        });
+	}
+	function paintArticle(article){
+		 	$(".label").unbind("hover")
+			var article_link="/blog/article/"+article['id']
+			var category_link="/blog/category/"+article['category_id']
+			var	taglink=""
+			for(var j=0;j<article['tag_info'].length;j++){
+				taglink=[taglink,"<a href='/blog/tag/"+article['tag_info'][j]['Tag_id']+"'>"+article['tag_info'][j]['Tag_name']+"</a>"].join(' ')
+			}
+			var html="<article class='excerpt'>\
+						<header>\
+							<a href='"+category_link+"' class='cate'><span class='label'>\
+								"+article['category_name']+"\
+								<span class='arrow'></span>\
+							</span></a>\
+							<a href='"+article_link+"'><h2 class='title'>"+article['title']+"</h2></a>\
+						</header>\
+						<div class='text_date'>\
+							yys_c &nbsp;创建于&nbsp;"+article['created_time']+" &nbsp;&nbsp;修改于&nbsp;"+article['modified_time']+"\
+						</div>\
+						<div class='eps'>\
+							<div class='focus'>\
+								<a href='"+article_link+"'>\
+									<img src='/media/"+article['post']+"' class='thumb'>\
+								 </a>\
+							</div>\
+							<div class='note'>\
+								"+exp_gen(article['body'])+"\
+							</div>\
+						</div>\
+						<div class='hoka text_date'>\
+							<span class='text_date'>标签:"+taglink+"</span>\
+							<a href='"+article_link+"'>\
+								评论("+article['comment']+")\
+							</a>\
+							<a href='"+article_link+"'>\
+								浏览量("+article['views']+")\
+							</a>\
+						</div>\
+					</article>"
+		$('#contents').html([$('#contents').html(),html].join(''))
+		$('.label').hover(function(){
+			$(this).toggleClass("active_label")
+		})
+		$('.cate').each(function() {
+	        $(this).tooltip({
+	            container: 'body',
+	            title: '查看关于 ' + $(this).text() + ' 的文章'
+	        })
+    	})
+	}
+    function refresh(start,end,page){
+     	for(var i=start;i<article_ids.length&&i<=end;i++){
+			getArticle(article_ids[i]['id'])
+		}	
+	}
+	function showMore(){
+		var start=(page-1)*onePage
+		if(start>=article_ids.length)return false
+		var end=start+onePage-1
+		refresh(start,end,page++)
+		// rebind()
+		return true
+	}
+	function exp_gen(str){
+		ret=HTMLdecode(str)
+		var ret = ret.replace(/<.*?>/ig,"")
+		ret = ret.replace(/^\s+|\s+$/g,"")
+		return ret.substring(0,185)
+	}
+</script>
+<script type="text/javascript">
+
+</script>
+{% endblock %}
