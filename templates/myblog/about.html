@@ -1,0 +1,84 @@
+{% extends "myblog/base.html" %}
+{% block title %}
+ | About
+{% endblock %}
+{% block css %}
+<link rel="stylesheet" type="text/css" href="/static/myblog/css/head.css">
+<style type="text/css">
+	#content{
+		background: rgba(0,0,0,0.6);
+		padding-bottom: 20px;
+		padding-top: 20px;
+		border-radius: 0.25em;
+		width: 100%;
+		height: 60%;
+	}
+	#head_ico{
+		line-height:1.5;
+		background: transparent;
+		margin: 0 auto;
+		width: 70%;
+		-webkit-user-select:none;
+   		-moz-user-select:none;
+   		-ms-user-select:none;
+   		user-select:none;
+	}
+	#head_ico span{
+		margin-left:10px;
+		font-size: 15px;
+		font-weight: 900;
+	}
+	#naiyou{
+		background: transparent;
+		margin: 0 auto;
+		width: 70%;
+		margin-top:100px;
+		color:pink;
+		font-weight: 900;
+	}
+</style>
+{% endblock %}
+{% block content %}
+<h3 class='head'><strong>自分紹介</strong></h3>
+<div id="content">
+	<div id="mask">
+		<div id="head_ico">
+		</div>
+		<div id="naiyou">
+			我是yys_c，一条咸鱼。
+		</div>
+	</div>
+	
+</div>
+
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+	$(document).ready(function(){
+		setTimeout(getHead_ico,1000)
+	})
+	function getHead_ico(){
+		$.ajax({
+            type: "POST",
+            dataType: "json",
+            url: "{% url 'blog:getAsc' %}",
+            data: {
+            	'csrfmiddlewaretoken':'{{ csrf_token }}', 
+            },
+            success: function (ret) {
+            	//得到对应文章
+            	$("#head_ico").html(ret)
+            	$("#mask").fadeIn(2000)
+            },
+            error: function () {
+                alert('错误');
+            }
+        });
+	}
+
+
+	
+    
+	
+</script>
+{% endblock %}

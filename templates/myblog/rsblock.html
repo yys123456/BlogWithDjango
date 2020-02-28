@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>{{ error }} | ERROR</title>
+	<script type="text/javascript" src="\static\myblog\js\jquery.min.js"></script>
+	<script type="text/javascript" src="\static\myblog\js\bootstrap.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="\static\myblog\css\bootstrap.css">
+	<style type="text/css">
+		.imap{
+			border: 1px solid pink;
+			width: 300px;
+			height: 500px;
+		}
+		.cell{
+			border: 2px solid red;
+			border-color: transparent;
+			width:20px;
+			height:20px;
+		}
+		.hover{
+			
+		}
+		.nexthover{
+			background: rgba(0,255,255,0.3);
+			width: 20px;
+			height: 20px;
+			border: 0.5px solid rgba(255,0,0,0.4);
+		}
+		#next{
+			margin-left: 20px;
+			/*border: 1px solid #0000ff;*/
+		}
+		#next td{
+			width: 30px;
+			height: 30px;
+		}
+		#next table{
+			padding-left: 50px
+		}
+		.others{
+			padding-left:20px;
+		}
+		.others td{
+			text-align: center;
+			/*border: 0.5px solid rgba(255,0,0,0.4);*/
+		}
+		#keyBoard{
+			/*border: 0.5px solid rgba(255,0,0,0.4); */
+			margin-top: 20px;
+			margin-left:80px;
+		}
+	</style>
+</head>
+<body>
+	<table style="margin:0 auto;">
+		<tr>
+			<td>
+				<div id="map">
+					
+				</div>
+			</td>
+			<td>
+				<table class="others">
+					<tr>
+						<td>
+							<strong>得分</strong>
+						</td>
+						<td id="score"></td>
+					</tr>
+					<tr>
+						<td>
+							<strong>下一个</strong>
+						</td>
+						<td id="next">
+							
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<button type="button" class="btn btn-default" onclick="startPressed()">开始</button>
+							<button type="button" class="btn btn-default" onclick="pause()">暂停</button>
+							 <button type="button" class="btn btn-default"onclick="reset()">重新开始</button>
+						</td>
+					</tr>
+					<tr>
+						<td colspan="2">
+							<table id="keyBoard">
+								<tr>
+									<td colspan="3">
+										 <button id="up" type="button" class="btn btn-default" onmousedown="getColor(this)" onmouseup="retColor(this)" onclick="getNext(up)"><span class="glyphicon glyphicon-arrow-up"></span></button>      
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<button id="left" type="button" class="btn btn-default" onmousedown="getColor(this)" onmouseup="retColor(this)" onclick="getNext(left)"><span class="glyphicon glyphicon-arrow-left"></span></button>   
+									</td>
+									<td>
+										<button id="down" type="button" class="btn btn-default" onmousedown="getColor(this)" onmouseup="retColor(this)" onclick="getNext(down)"><span class="glyphicon glyphicon-arrow-down"></span></button>      
+									</td>
+									<td>
+										<button id="right" type="button" class="btn btn-default" onmousedown="getColor(this)" onmouseup="retColor(this)" onclick="getNext(right)"><span class="glyphicon glyphicon-arrow-right"></span></button>      
+									</td>
+								</tr>
+							</table>
+						</td>
+					</tr>
+				</table>
+			</td>
+		</tr>
+	</table>
+	
+</body>
+<script type="text/javascript">
+	var row=20,col=10,left=37,right=39,down=40,up=38
+	var nf,cf//本次
+	var kinds=['Z','L','I','O','T']
+	var katas=['left','right','up','down']
+	var key=down
+	var run
+	var xi=getForm()
+	var nfvalid=true
+	var score=0
+	var ispaused=false
+	var over=true
+	var uparrow=document.getElementById('up')
+	var downarrow=document.getElementById('down')
+	var leftarrow=document.getElementById('left')
+	var rightarrow=document.getElementById('right')
+	$(document).ready(function(){
+		/*
+			1. 画地图区域
+			2. 按键监听事件
+		*/
+		drawMap()
+		document.onkeydown=keydown
+		document.onkeyup=keyup
+	})
+	function getColor(b){
+		b.className="btn btn-danger"
+	}
+	function retColor(b){
+		b.className="btn btn-default"
+	}
+	function reset(){
+		clearInterval(run)
+		ispaused=false
+		over=true
+		score=0
+		document.getElementById("map").innerHTML=''
+		drawMap()
+	}
+	function check(arr){
+		for(var i=0;i<4;i++){
+			if(arr[0][i]<0)return false
+			if(arr[0][i]>=row)return false
+			if(arr[1][i]<0)return false
+			if(arr[1][i]>=col)return false
+			if(isHit(arr[0][i],arr[1][i])&&!inOrigin(arr[0][i],arr[1][i]))return false
+		}
+		return true
+	}
+	function paintxi(xi){
+		for(var i=0;i<7;i++){
+			for(var j=0;j<7;j++){
+				document.getElementById(i+""+j).className=''
+			}
+		}
+		var dc=col
+		for(var i=0;i<4;i++){
+			dc=Math.min(dc,xi[1][i])
+		}		
+		for(var i=0;i<4;i++){
+			xi[1][i]-=(dc-2)
+			xi[0][i]+=2
+		}
+		for(var i=0;i<4;i++){
+			document.getElementById(xi[0][i]+""+xi[1][i]).className='nexthover'
+		}
+
+	}
+	function keydownColor(key){
+		if(key==down){
+			getColor(downarrow)
+		}else if(key==right){
+			getColor(rightarrow)
+		}else if(key==left){
+			getColor(leftarrow)
+		}else{
+			getColor(uparrow)
+		}
+	}
+	function keyup(event){
+		var e = event || window.event || arguments.callee.caller.arguments[0];
+		if(e.keyCode==down){
+			retColor(downarrow)
+		}else if(e.keyCode==right){
+			retColor(rightarrow)
+		}else if(e.keyCode==left){
+			retColor(leftarrow)
+		}else{
+			retColor(uparrow)
+		}
+	}
+	function keydown(event){
+		var e = event || window.event || arguments.callee.caller.arguments[0];
+		key=e.keyCode
+		if(ispaused||(key!=down&&key!=left&&key!=right&&key!=up))return;
+		getNext(key)
+		keydownColor(key)
+	}
+	function getNext(keyCode){
+		if(over==true)return;
+		var next=new Array(new Array(4),new Array(4))
+		if(keyCode==left){
+			for(var i=0;i<4;i++){
+				next[0][i]=nf[0][i]
+				next[1][i]=nf[1][i]-1
+			}
+		}else if(keyCode==right){
+			for(var i=0;i<4;i++){
+				next[0][i]=nf[0][i]
+				next[1][i]=nf[1][i]+1
+			}	
+		}else if(keyCode==up){//顺时针转90
+			var dx=nf[0][0],dy=nf[1][0]
+			rx=[0,-1,dx+dy]
+			ry=[1,0,dy-dx]
+			for(var i=0;i<4;i++){
+				next[0][i]=matrixMult([nf[0][i],nf[1][i],1],rx)
+				next[1][i]=matrixMult([nf[0][i],nf[1][i],1],ry)
+			}
+		}else{//向下
+			for(var i=0;i<4;i++){
+				next[0][i]=nf[0][i]+1
+				next[1][i]=nf[1][i]
+			}
+		}
+		if(check(next)){
+			next[2]=deepCopy(nf[2])
+			nf=deepCopy(next)
+			return true
+		}
+		return false
+	}
+	function inOrigin(a,b){
+		for(var i=0;i<4;i++){
+			if(cf[0][i]==a&&cf[1][i]==b)return true
+		}
+		return false
+	}
+	function matrixMult(a,b){
+		var ret=0
+		for(var i=0;i<a.length;i++){
+			ret+=a[i]*b[i]
+		}
+		return ret
+	}
+	function isHit(r,c){
+		return document.getElementById(r+","+c).className=='hover'
+	}
+
+	function canGetScore(row){//是否当前行能否连成整体
+		for(var i=0;i<col;i++){
+			if(document.getElementById(row+","+i).className=='cell')return false
+		}
+		return true
+	}
+	function gameOver(){
+		for(var i=0;i<4;i++){
+			if(isHit(nf[0][i],nf[1][i]))return true
+		}
+		return false
+	}
+	function pause(){
+		ispaused=true
+		clearInterval(run)
+	}
+	function fall(){
+		clearForm()
+		cf=deepCopy(nf)
+		drawForm()
+		if(!getNext(down)){
+			start()
+		}
+	}
+	function update(){
+		for(var i=row-1;i>=0;i--){
+			if(canGetScore(i)){
+				score+=100
+				allDown(i)
+				update()
+			}
+		}
+	}
+	function startPressed(){
+		if(over){
+			reset()
+			over=false
+			start()
+			return;
+		}
+		if(ispaused){
+			ispaused=false
+			run=setInterval(fall,300)
+		}
+	}
+	function start(){
+		clearInterval(run)
+		update()
+		document.getElementById('score').innerHTML=score+""
+		nf=xi,cf=null,xi=getForm()
+		paintxi(deepCopy(xi))
+		if(gameOver()){
+			over=true
+			alert("游戏结束！你的得分="+score)
+		}else{
+			run=setInterval(fall,300)
+		}
+		
+	}
+	function allDown(row){
+		for(var i=row;i>=1;i--){
+			for(var j=0;j<col;j++){
+				document.getElementById(i+","+j).className=document.getElementById((i-1)+","+j).className
+				document.getElementById(i+","+j).style.backgroundColor=document.getElementById((i-1)+","+j).style.backgroundColor
+			}
+		}
+	}
+	function drawMap(){
+		var map=document.getElementById('map')
+		var next=document.getElementById('next')
+		var table="<table class='imap'>"
+		var nextTable="<table>"
+		for(var i=0;i<row;i++){
+			table+="<tr>"
+			for(var j=0;j<col;j++){
+				table+="<td id='"+i+","+j+"' class='cell'></td>"
+			}
+			table+="</tr>"
+		}
+		table+="<table>"
+		map.innerHTML=table
+		for(var i=0;i<7;i++){
+			nextTable+="<tr>"
+			for(var j=0;j<7;j++){
+				nextTable+="<td id="+i+""+j+"></td>"
+			}
+			nextTable+="</tr>"
+		}
+		nextTable+="</table>"
+		next.innerHTML=nextTable
+	}
+	function drawForm(){
+		for(var i=0;i<4;i++){
+			var cell=document.getElementById(cf[0][i]+","+cf[1][i])
+			cell.className='hover'
+			cell.style.backgroundColor=cf[2][i]
+		}
+	}
+	function clearForm(){
+		if(cf==null)return;
+		for(var i=0;i<4;i++){
+			var cell=document.getElementById(cf[0][i]+","+cf[1][i])
+			cell.className='cell'
+			cell.style.backgroundColor='#ffffff'
+		}
+	}
+
+	function getForm(){
+		var kind=kinds[randomNum(0,kinds.length-1)]
+		var kta=katas[randomNum(0,katas.length-1)]
+		var st=randomNum(0,col-1)
+		var color=new Array(4)
+		for(var i=0;i<4;i++)color[i]="rgba("+randomNum(0,255)+","+randomNum(0,100)+","+randomNum(0,100)+",0.3)"
+			// color[i]='#'+randomNum(0,(1<<24)-255).toString(16)
+		// alert(color)
+		switch(kind){
+			case 'Z':
+				if(kta=='left'){
+					while(st+2>=col)st--;
+					return new Array(new Array(0,0,1,1),new Array(st,st+1,st+1,st+2),color)
+				}
+				if(kta=='right'){
+					while(st+2>=col)st--;
+					return new Array(new Array(1,1,0,0),new Array(st,st+1,st+1,st+2),color)
+				}
+				if(kta=='up'){
+					while(st+1>=col)st--;
+					return new Array(new Array(0,1,1,2),new Array(st,st,st+1,st+1),color)
+				}
+				if(kta=='down'){
+					while(st+1>=col)st--;
+					return new Array(new Array(2,1,1,0),new Array(st,st,st+1,st+1),color)
+				}
+			case 'L':
+				while(st+1>=col)st--;
+				if(kta=='left'){
+					//从第一行开始画
+					return new Array(new Array(0,1,2,2),new Array(st,st,st,st+1),color)
+				}
+				if(kta=='right'){
+					return new Array(new Array(2,2,1,0),new Array(st,st+1,st+1,st+1),color) 
+				}
+				if(kta=='up'){
+					return new Array(new Array(0,0,1,2),new Array(st,st+1,st,st),color)
+				}
+				if(kta=='down'){
+					return new Array(new Array(0,0,1,2),new Array(st,st+1,st+1,st+1),color)
+				}
+			case 'I':
+				if(kta=='right'||kta=='up'){
+					//横
+					while(st+3>=col)st--;
+					return new Array(new Array(0,0,0,0),new Array(st,st+1,st+2,st+3),color)
+				}
+				if(kta=='left'||kta=='down'){
+					//竖
+					return new Array(new Array(0,1,2,3),new Array(st,st,st,st),color)
+				}
+			case 'O':
+				while(st+1>=col)st--;
+				return new Array(new Array(0,0,1,1),new Array(st,st+1,st,st+1),color)
+			case 'T':
+				while(st+2>=col)st--;
+				if(kta=='right'||kta=='up'){
+					//上
+					return new Array(new Array(1,1,1,0),new Array(st,st+1,st+2,st+1),color)
+				}
+				if(kta=='left'||kta=='down'){
+					//下
+					return new Array(new Array(0,0,0,1),new Array(st,st+1,st+2,st+1),color)
+				}
+			}
+	}
+	function  deepCopy(obj) {
+		 if (typeof obj !== 'object') return;
+		 var newObj = obj instanceof Array ? [] : {};
+		 for (var key in obj) {
+		   if (obj.hasOwnProperty(key)) {
+		     newObj[key] = typeof obj[key] === 'object' ? deepCopy(obj[key]) : obj[key];
+		   }
+		 }
+		 return newObj;
+	}
+
+	function randomNum(minNum, maxNum) {
+		switch (arguments.length) {
+		case 1:
+		  return parseInt(Math.random() * minNum + 1, 10);
+		  break;
+		case 2:
+		  return parseInt(Math.random() * ( maxNum - minNum + 1 ) + minNum, 10);
+		  //或者 Math.floor(Math.random()*( maxNum - minNum + 1 ) + minNum );
+		  break;
+		default:
+		  return 0;
+		  break;
+		}
+	}
+
+</script>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+{% load mathjax %}
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" type="text/css" href="\static\myblog\css\bootstrap.css">
+	<link rel="stylesheet" type="text/css" href="\static\myblog\css\style.css">
+	<link rel="stylesheet" type="text/css" href="\static\myblog\css\scrollmenu-y.css">
+	<link rel="stylesheet" href="/static/myblog/css/font-awesome.min.css">
+	<script src="\static\myblog\js\jquery.min.js"></script>
+	<script src="\static\myblog\js\bootstrap.min.js"></script>
+	<script src="\static\myblog\js\HTMLUtils.js"></script>
+	<!-- <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script> -->
+	<title>	
+	YYS_C
+	{% block title %}
+
+	{% endblock %}
+	</title>
+	{% block css %}
+
+	{% endblock %}	
+
+	{% mathjax_scripts %}
+	<style type="text/css">
+		*{
+			font-family:'Microsoft YaHei';
+		}
+	</style>
+</head>
+<body>
+	<div  style="z-index:-1;position: absolute;">
+		<div style="position:fixed;">
+			<img id="bg" src="" style="width:100%;opacity:0.3;top:0"><!-- /static/img/back.jpg -->
+		</div>
+	</div>
+	
+		<div id="wrapper">
+			<!-- Sidebar -->
+			<nav class="navbar navbar-inverse navbar-fixed-top" id="sidebar-wrapper" role="navigation" >
+				<ul class="nav sidebar-nav">
+					<li class="sidebar-brand"  style="background: transparent;">
+						<a href="{% url 'blog:index'%}" style="text-align:center">
+						   <i>咸の鱼</i>
+						</a>
+					</li>
+					<li>
+						<a href="{% url 'blog:index' %}"><i class="fa fa-fw fa-home"></i>主頁</a>
+					</li>
+					<li class="dropdown" style="height: 50%;">
+					  <a href="" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-fw fa-plus"></i> 標簽 <span class="caret"></span></a>
+					  <ul class="dropdown-menu scrollmenu-y" role="menu" style="background:transparent;text-align: right;height: 130px" >
+					  		<!-- <div style="height: auto"> -->
+					  			{% for i in baseContext.tags %}
+									<a href="{% url 'blog:tag' i.id %}">{{i.name}}&nbsp;&nbsp;<span class="badge" style="background: transparent;border:1px solid purple">{{i.sum}}</span></a>
+					  			{% endfor %}
+					  		<!-- </div> -->
+					  		
+					  </ul>
+					</li>
+					<li class="dropdown">
+					  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-fw fa-plus"></i> 分類 <span class="caret"></span></a>
+					   <ul class="dropdown-menu scrollmenu-y" role="menu" style="background:transparent;text-align: right;height: 130px;
+">
+						<!-- <div style="height: auto"> -->
+							{% for i in baseContext.categories %}
+								<a href="{% url 'blog:category' i.id %}">{{i.name}}&nbsp;&nbsp;<span class="badge" style="background: transparent;border:1px solid purple">{{i.sum}}</span></a>
+						  	{% endfor %}
+					  	<!-- </div> -->
+					  </ul>
+					</li>
+					<li>
+						<a href="{% url 'blog:about'%}">&nbsp;<i class="fa fa-user" aria-hidden="true"></i>&nbsp;关于</a>
+					</li>
+				</ul>
+			</nav>	
+		<div id="page-content-wrapper">
+				<button type="button" class="hamburger is-closed animated fadeInLeft" data-toggle="offcanvas">
+				<span class="hamb-top"></span>
+				<span class="hamb-middle"></span>
+				<span class="hamb-bottom"></span>
+				</button>
+				<div class="container">
+				    <div class="row ">
+				        <div class="col-lg-8 col-lg-offset-2">
+				           	{% block content %}
+
+							{% endblock %}
+							<footer class="footPane">
+								<hr>
+								Copyright © <span id="year"></span> yys_c
+							</footer>
+				        </div>
+				    </div>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript">
+			var bgs={{ baseContext.backgrounds | safe}}
+			var media="/media/"
+			var index=0
+			$(document).ready(function () {
+				$("#bg").attr("src",media+bgs[index++])
+				setInterval(imgShow,10000)
+			})
+			function changeImg(){
+				index%=bgs.length
+				$("#bg").css("display","none")
+				$("#bg").attr("src",media+bgs[index++])
+			}
+			function imgShow(){
+				$("#bg").fadeOut(1000,changeImg)
+				$("#bg").fadeIn(1000)
+			}
+		</script>
+		
+</body>
+<script type="text/javascript">
+	var back=document.getElementById('back')
+	var i=0
+	$(document).ready(function () {
+		var year = document.getElementById("year")
+		year.innerHTML=new Date().getFullYear()
+	  var trigger = $('.hamburger'),
+		  // overlay = $('.overlay'),
+		  isClosed = false;
+		
+		trigger.click(function () {
+		  hamburger_cross();      
+		});
+
+		function hamburger_cross() {
+		  if (isClosed == true) {         
+			// overlay.hide();
+			trigger.removeClass('is-open');
+			trigger.addClass('is-closed');
+			isClosed = false;
+		  } else {   
+			// overlay.show();
+			trigger.removeClass('is-closed');
+			trigger.addClass('is-open');
+			isClosed = true;
+		  }
+	  }
+	  $('[data-toggle="offcanvas"]').click(function () {
+			$('#wrapper').toggleClass('toggled');
+	  });
+	  //  $('#wrapper').hover(function () {
+			// $('#wrapper').className="";
+	  // });
+
+	});
+	
+
+</script>
+{% block script %}
+
+{% endblock %}
+
+</html>
